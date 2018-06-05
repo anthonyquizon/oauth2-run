@@ -9,6 +9,7 @@
          (prefix-in wh: web-server/http)
          (prefix-in url: "./url.rkt")
          (prefix-in c: "./client.rkt")
+         (prefix-in n: net/url)
          json)
 
 (define (handle-init id auth-url redirect-url) 
@@ -16,7 +17,7 @@
     (define query `((client_id . ,id)
                     (redirect_uri . ,redirect-url)))
     (define url (url:append-query auth-url query))
-    (wh:redirect-to url)))
+    (wh:redirect-to (n:url->string url))))
 
 (define (handle-auth #:channel ch 
                      #:id id 
@@ -32,9 +33,8 @@
                     (client_secret . ,secret)
                     (code . ,code)))
     (define url (url:append-query token-url query))
-    (define auth-token (exec-post url))
-
-    ;;TODO parse json
+    (define data (exec-post url))
+    (define auth-token (hash-ref data 'access_token))
 
     (channel-put ch auth-token)))
 
@@ -57,12 +57,17 @@
                     #:exec-post c:post)]
       [else (handle-init id auth-url redirect-url)]))
 
-  ;;TODO kill server after get
-  (we:serve/servlet dispatch
-                    #:servlet-regexp #rx""
-                    #:port 8080)  
+  (define server-thread
+    (thread 
+      (lambda () 
+        (we:serve/servlet dispatch
+                          #:servlet-regexp #rx""
+                          #:port 8080))))  
 
-  (channel-get ch))
+  (define auth (channel-get ch))
+  (kill-thread server-thread)
+
+  auth)
 
 (module+ test
   (require rackunit
@@ -88,5 +93,6 @@
                       #:exec-post exec-post) req)))
 
     (check-equal? 
-      (channel-get ch)
-      'hello)))
+      (channel-get ch) 'hello)))
+
+
