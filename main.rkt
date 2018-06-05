@@ -17,28 +17,30 @@
   'TODO ;;set bearer
   )
 
+(define cache-file "oauth.cache")
+
 (define (run path proc)
   (define config-path (build-path path "config.yml"))
-  (define cache-path (build-path path "oauth.cache"))
   (define config (~> config-path open-input-file y:read-yaml))
   (define auth 
-    (c:with-cache (c:cachefile cache-path) 
+    (c:with-cache (c:cachefile cache-file) 
                   (authenticate #:token-url (hash-ref config "token_url")
                                 #:auth-url (hash-ref config "auth_url")
                                 #:id (hash-ref config "id")
                                 #:secret (hash-ref config "secret")
                                 #:redirect-url (hash-ref config "redirect_url")))) 
 
-
-  (proc auth))
+ (proc auth))
 
 (module+ test
   (require racket/runtime-path)
-
   (define-runtime-path cwd "./")
 
-  (define path (build-path cwd "examples"))
-  (define (proc auth)
-    (displayln auth))
+  (define (main)
+    (define path (build-path cwd "examples"))
+    (define (proc auth) (displayln auth))
 
-  (run path proc))
+    (run path proc))
+
+  (main)
+  )

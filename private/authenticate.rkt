@@ -14,7 +14,7 @@
 (define (handle-init id auth-url redirect-url) 
   (lambda (_req)
     (define query `((client_id . ,id)
-                    (redirect_url . ,redirect-url)))
+                    (redirect_uri . ,redirect-url)))
     (define url (url:append-query auth-url query))
     (wh:redirect-to url)))
 
@@ -23,15 +23,14 @@
     (define req-url (wh:request-uri req))
     (define code (hash-ref (url:get-query url) "code"))
     (define query `((client_id . ,id)
-                    (redirect_url . ,redirect-url)
+                    (redirect_uri . ,redirect-url)
                     (client_secret . ,secret)
                     (code . ,code)))
     (define url (url:append-query token-url query))
 
     (displayln (c:post url))))
 
-(define ((authenticate ch
-                       #:token-url token-url 
+(define ((authenticate #:token-url token-url 
                        #:auth-url auth-url 
                        #:id id
                        #:secret secret 
@@ -41,7 +40,8 @@
 
   (define-values (dispatch url)
     (wd:dispatch-rules
-      [("auth" "response") (handle-auth ch id secret token-url redirect-url)]
+      [("auth" "response") 
+       (handle-auth ch id secret token-url redirect-url)]
       [else (handle-init id auth-url redirect-url)]))
 
   ;;TODO kill server after get
