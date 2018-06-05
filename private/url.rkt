@@ -27,6 +27,11 @@
     (struct-copy n:url url^ [query query^])))
 
 (define (get-query url)
-  (define url^ (n:string->url))
+  (define url^  
+    (cond 
+      [(string? url) (n:string->url url)]
+      [else url]))
+
   (define query (n:url-query url^))
+
   (make-hash query))
