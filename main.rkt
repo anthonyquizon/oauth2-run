@@ -8,14 +8,14 @@
          (prefix-in n: net/url) 
          (prefix-in c: with-cache) 
          "./private/authenticate.rkt"
+         (prefix-in client: "./private/client.rkt")
          json)
 
 (define (call auth url
               #:method [method 'GET] 
               #:data [data null])
-
-  'TODO ;;set bearer
-  )
+  ;;TODO data
+  (client:http/auth auth url #:method method))
 
 (define cache-file "oauth.cache")
 
@@ -33,14 +33,17 @@
  (proc auth))
 
 (module+ test
-  (require racket/runtime-path)
+  (require racket/runtime-path
+           (prefix-in url: "./private/url.rkt"))
+
   (define-runtime-path cwd "./")
 
   (define (main)
     (define path (build-path cwd "examples"))
-    (define (proc auth) (displayln auth))
+    (define (proc auth) 
+      (define url (url:make "" ""))
+      (displayln (call auth url)))
 
     (run path proc))
 
-  (main)
-  )
+  (main))

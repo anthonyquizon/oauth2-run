@@ -22,8 +22,10 @@
 
 (define (uri url)
   (define head 
-    (string-join 
-      `(,(n:url-scheme url) "://" ,(n:url-host url) ":" ,(~a (n:url-port url))) ""))
+    (format "~a://~a:~a" 
+            (n:url-scheme url)  
+            (n:url-host url) 
+            (n:url-port url)))
 
   (~> (n:url->string url)
       (string-replace _ head "")))
