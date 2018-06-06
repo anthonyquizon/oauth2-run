@@ -1,19 +1,24 @@
 #lang racket
 
 (require (prefix-in oauth2: "../main.rkt")
+         threading
          racket/runtime-path)
 
 (define-runtime-path cwd "./")
 
 (define ((update-list cons-url auth) id) 
   (define url (cons-url id))
-  (displayln url)
-  (displayln (oauth2:call auth url))
-  
-  ;;get parent
-  ;;update title
+  (define data (oauth2:call auth url))
 
-  )
+  (define (f todo) 
+    (define parent_title (~> (hash-ref todo 'parent)
+                             (hash-ref _ 'title)))
+    (define title (hash-ref todo 'title))
+    (define title^ (format "~a ~a" parent_title title))
+    (displayln title^)
+    )
+  
+  (for-each f data))
 
 (define (run config auth)
   (define (cons-url id) 
