@@ -19,7 +19,8 @@
     (define url (url:append-query auth-url query))
     (wh:redirect-to (n:url->string url))))
 
-(define (handle-auth #:channel ch 
+(define (handle-auth #:data-chan data-ch 
+                     #:confirm-chan confirm-ch
                      #:id id 
                      #:secret secret 
                      #:token-url token-url 
@@ -36,7 +37,12 @@
     (define data (exec-post url))
     (define auth-token (hash-ref data 'access_token))
 
-    (channel-put ch auth-token)))
+    (channel-put data-ch auth-token)
+    (channel-get confirm-ch)
+
+    (ws:response/xexpr
+      `(html (head (title "OAuth2"))
+             (body (h1 "Auth Done"))))))
 
 (define ((authenticate #:token-url token-url 
                        #:auth-url auth-url 
@@ -44,12 +50,14 @@
                        #:secret secret 
                        #:redirect-url redirect-url))
 
-  (define ch (make-channel))
+  (define data-ch (make-channel))
+  (define confirm-ch (make-channel))
 
   (define-values (dispatch url)
     (wd:dispatch-rules
       [("auth" "response") 
-       (handle-auth #:channel ch 
+       (handle-auth #:data-chan data-ch 
+                    #:confirm-chan confirm-ch
                     #:id id 
                     #:secret secret 
                     #:token-url token-url 
@@ -64,7 +72,9 @@
                           #:servlet-regexp #rx""
                           #:port 8080))))  
 
-  (define auth (channel-get ch))
+  (define auth (channel-get data-ch))
+  (channel-put confirm-ch 'ok)
+
   (kill-thread server-thread)
 
   auth)
