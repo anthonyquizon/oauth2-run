@@ -1,0 +1,12 @@
+id: "1234"
+secret: "dsadfasgaff"
+redirect_url: "http://localhost:8080/auth/response"
+
+# example of custom config that will be passed to your function
+account_id: "3213213"
+bucket: "413422"
+todolists:
+  - "42142321"
+
+auth_url: 'https://launchpad.37signals.com/authorization/new?type=web_server'
+token_url: 'https://launchpad.37signals.com/authorization/token?type=web_server'

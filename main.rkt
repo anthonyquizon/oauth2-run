@@ -13,40 +13,28 @@
          json)
 
 
-(define hash-limit 20)
 (define regex #rx"(https://)|(/)|(www)|(\\.)|( )|(\\-)")
-
-(define (data->hash-string data)
-  (cond
-    [(null? data) ""]
-    [else 
-      (define str-data (~a data))
-      (define l (- (string-length str-data) 1))
-      (define n (min l hash-limit))
-      (define m (max 0 (- l n)))
-
-      (format "~a~a"
-              (substring str-data 0 n)
-              (substring str-data m l))]))
 
 (define (call auth url
               #:method [method 'GET] 
-              #:data [data null]
+              #:data [data #f]
               #:cached? [cached? #t])
 
   (define url^ (url:string->url url))
   (define (f) 
-    (client:http/auth auth url^ #:method method))
+    (client:http/auth auth 
+                      url^ 
+                      #:method method
+                      #:data data))
 
   (cond
-    [(not cached?) (f)]
-    [else 
-      (define data-string (data->hash-string data))
-      (define hash-name (~> (format "~a~a~a" url method data-string)
-                            (regexp-replace* regex _ "")
-                            nu:uri-encode)) 
+    [(equal? method 'GET) 
+     (define hash-name (~> (~a url)
+                           (regexp-replace* regex _ "")
+                           nu:uri-encode)) 
 
-      (c:with-cache (c:cachefile hash-name) f)]))
+     (c:with-cache (c:cachefile hash-name) f)]
+    [else (f)]))
 
 (define cache-file "oauth.cache")
 
