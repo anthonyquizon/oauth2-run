@@ -5,7 +5,8 @@
 
 (require threading
          (prefix-in y: yaml)
-         (prefix-in n: net/url) 
+         (prefix-in nu: net/uri-codec)
+         (prefix-in url: "./private/url.rkt")  
          (prefix-in c: with-cache) 
          "./private/authenticate.rkt"
          (prefix-in client: "./private/client.rkt")
@@ -13,9 +14,17 @@
 
 (define (call auth url
               #:method [method 'GET] 
-              #:data [data null])
-  ;;TODO data
-  (client:http/auth auth url #:method method))
+              #:data [data null]
+              #:cached? [cached? #t])
+
+  (define url^ (url:string->url url))
+  (define hash-name (nu:uri-encode (format "~a-~a" url method))) ;;TODO data
+
+  (c:with-cache 
+    #:use-cache? cached?
+    (c:cachefile hash-name)
+    (lambda () 
+      (client:http/auth auth url^ #:method method))))
 
 (define cache-file "oauth.cache")
 
@@ -30,7 +39,7 @@
                                 #:secret (hash-ref config "secret")
                                 #:redirect-url (hash-ref config "redirect_url")))) 
 
- (proc auth))
+ (proc config auth))
 
 (module+ test
   (require racket/runtime-path
@@ -40,9 +49,8 @@
 
   (define (main)
     (define path (build-path cwd "examples"))
-    (define (proc auth) 
-      (define url (url:make "" ""))
-      (displayln (call auth url)))
+    (define (proc config auth) 
+      (displayln auth))
 
     (run path proc))
 

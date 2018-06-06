@@ -3,7 +3,8 @@
 (provide make
          append-query
          get-query
-         uri)
+         uri
+         (rename-out [n:string->url string->url]))
 
 (require (prefix-in n: net/url)
          threading)
